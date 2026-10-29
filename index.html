@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>沉浸式体验水水军阀的一天</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+    background: #171a20;
+    overflow: hidden;
+    color: #f2ece6;
+    user-select: none;
+  }
+
+  #stage {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  #bg {
+    position: absolute; inset: 0;
+    background: linear-gradient(160deg, #2b3340, #3a2f3a 60%, #46392f);
+    background-size: cover;
+    background-position: center;
+    transition: background-image .5s ease;
+  }
+  #bgShade {
+    position: absolute; inset: 0;
+    background: linear-gradient(to bottom, rgba(10,12,16,.25), rgba(10,12,16,.05) 35%, rgba(10,12,16,.65));
+    pointer-events: none;
+  }
+
+  #chapterTitle {
+    position: absolute;
+    top: 22px; left: 0; right: 0;
+    text-align: center;
+    font-size: 14px;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,.72);
+    text-shadow: 0 2px 8px rgba(0,0,0,.5);
+    z-index: 5;
+    opacity: 0;
+    transition: opacity .4s ease;
+  }
+  #chapterTitle.show { opacity: 1; }
+
+  #dialog {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 20px clamp(18px, 5vw, 64px) 24px;
+    background: linear-gradient(to top, rgba(16,18,24,.94), rgba(16,18,24,.82));
+    border-top: 1px solid rgba(255,255,255,.08);
+    cursor: pointer;
+    min-height: 190px;
+    z-index: 10;
+  }
+  #nameTag {
+    padding: 4px 16px;
+    border-radius: 999px;
+    font-size: 14px;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    color: #fff;
+    display: none;
+  }
+  #nameTag.penguin { display: inline-block; background: #2f6b8f; box-shadow: 0 3px 10px rgba(47,107,143,.4); }
+  #nameTag.rain { display: inline-block; background: #8c6b3f; box-shadow: 0 3px 10px rgba(140,107,63,.4); }
+  #nameTag.me { display: inline-block; background: #7a4f63; box-shadow: 0 3px 10px rgba(122,79,99,.4); }
+  #nameTag.colleague { display: inline-block; background: #4f6b5e; box-shadow: 0 3px 10px rgba(79,107,94,.4); }
+
+  #dialogText {
+    font-size: clamp(16px, 2.4vw, 18px);
+    line-height: 1.95;
+    color: #f2ece6;
+    min-height: 66px;
+    white-space: pre-wrap;
+  }
+  #dialogText.narration { color: #d8d2cc; }
+  #dialogText.prompt { color: #c9bfb2; font-style: italic; }
+
+  #hint {
+    position: absolute;
+    right: clamp(18px, 5vw, 64px);
+    bottom: 12px;
+    font-size: 12px;
+    color: rgba(255,255,255,.45);
+    letter-spacing: 1px;
+    animation: blink 1.8s infinite;
+  }
+  @keyframes blink { 0%,100% { opacity: .25; } 50% { opacity: .85; } }
+
+  #choices {
+    position: absolute;
+    left: 0; right: 0;
+    bottom: 230px;
+    padding: 0 clamp(24px, 9vw, 110px);
+    display: none;
+    z-index: 40;
+  }
+  #choices.show { display: block; }
+  #choices button {
+    display: block;
+    width: 100%;
+    margin: 0 0 12px;
+    padding: 16px 22px;
+    text-align: center;
+    font-size: clamp(15px, 2.3vw, 16.5px);
+    line-height: 1.6;
+    color: #f2ece6;
+    background: rgba(24,28,36,.92);
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 14px;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    transition: background .18s, transform .18s, border-color .18s;
+    animation: choiceIn .28s ease both;
+  }
+  #choices button:hover {
+    background: rgba(56,62,76,.96);
+    border-color: rgba(255,255,255,.42);
+    transform: translateY(-2px);
+  }
+  #choices button:nth-child(1) { animation-delay: 0s; }
+  #choices button:nth-child(2) { animation-delay: .06s; }
+  #choices button:nth-child(3) { animation-delay: .12s; }
+  @keyframes choiceIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade { animation: fade .35s ease; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+  #cover {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    padding: 30px;
+    background: linear-gradient(160deg, rgba(20,24,32,.55), rgba(40,26,34,.72));
+    z-index: 50;
+    background-size: cover;
+    background-position: center;
+  }
+  #cover h1 {
+    font-size: clamp(22px, 4.8vw, 30px);
+    letter-spacing: 2px;
+    margin: 0 0 18px;
+    text-shadow: 0 4px 20px rgba(0,0,0,.5);
+    line-height: 1.6;
+  }
+  #cover .sub {
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,.7);
+    margin-bottom: 14px;
+    line-height: 2;
+  }
+  #cover .guess {
+    font-size: 12.5px;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,.48);
+    margin-bottom: 36px;
+    line-height: 1.9;
+  }
+  #cover button {
+    border: 1px solid rgba(255,255,255,.35);
+    background: rgba(255,255,255,.1);
+    color: #fff;
+    padding: 13px 46px;
+    border-radius: 999px;
+    font-size: 16px;
+    letter-spacing: 4px;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  #cover button:hover { background: rgba(255,255,255,.22); }
+
+  #chapterCard {
+    position: absolute; inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: rgba(8,10,14,.88);
+    z-index: 45;
+    cursor: pointer;
+    padding: 30px;
+    backdrop-filter: blur(3px);
+  }
+  #chapterCard.show { display: flex; }
+  #chapterCard .num {
+    font-size: 13px;
+    letter-spacing: 6px;
+    color: rgba(255,255,255,.42);
+    margin-bottom: 18px;
+  }
+  #chapterCard .name {
+    font-size: clamp(20px, 4.4vw, 26px);
+    letter-spacing: 4px;
+    color: #f2ece6;
+    line-height: 1.7;
+    text-shadow: 0 4px 24px rgba(0,0,0,.5);
+    max-width: 80%;
+  }
+  #chapterCard .line {
+    width: 46px;
+    height: 1px;
+    background: rgba(255,255,255,.28);
+    margin: 26px auto 0;
+  }
+  #chapterCard .tip {
+    position: absolute;
+    bottom: 40px; left: 0; right: 0;
+    text-align: center;
+    font-size: 12px;
+    color: rgba(255,255,255,.38);
+    letter-spacing: 2px;
+    animation: blink 2s infinite;
+  }
+
+  #final {
+    position: absolute; inset: 0;
+    overflow-y: auto;
+    padding: 60px 22px 50px;
+    background: linear-gradient(160deg, rgba(16,20,28,.94), rgba(34,24,32,.96));
+    display: none;
+    z-index: 50;
+  }
+  #meteorCanvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+  #final .inner {
+    position: relative;
+    z-index: 1;
+    max-width: 640px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  #endingTitle {
+    font-size: clamp(20px, 4vw, 24px);
+    letter-spacing: 4px;
+    color: #f0e6ea;
+    margin: 0 0 28px;
+    text-shadow: 0 2px 14px rgba(0,0,0,.5);
+  }
+  #endingText {
+    font-size: clamp(15.5px, 2.3vw, 17px);
+    line-height: 2.2;
+    color: #e6dde2;
+    white-space: pre-wrap;
+    text-align: left;
+    padding: 24px 22px;
+    border-radius: 18px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    margin-bottom: 28px;
+  }
+  #endingNote {
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    color: rgba(255,255,255,.42);
+    line-height: 2;
+    margin-bottom: 34px;
+  }
+  #restartBtn {
+    border: 1px solid rgba(255,255,255,.25);
+    background: rgba(255,255,255,.07);
+    color: #f2ece6;
+    padding: 11px 30px;
+    border-radius: 999px;
+    font-size: 14px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  #restartBtn:hover { background: rgba(255,255,255,.16); }
+
+  #photoOverlay {
+    position: absolute; inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(8,10,14,.84);
+    z-index: 60;
+    cursor: pointer;
+    padding: 24px;
+  }
+  #photoOverlay.show { display: flex; }
+  #photoOverlay img {
+    max-width: 100%;
+    max-height: 76vh;
+    border-radius: 14px;
+    box-shadow: 0 24px 70px rgba(0,0,0,.6);
+    opacity: 0;
+    transform: scale(.94);
+    transition: opacity .55s ease, transform .55s ease;
+  }
+  #photoOverlay.show img {
+    opacity: 1;
+    transform: scale(1);
+  }
+  #photoFlash {
+    position: absolute; inset: 0;
+    background: #fff;
+    opacity: 0;
+    pointer-events: none;
+  }
+  #photoOverlay.flash #photoFlash {
+    animation: flashAnim .7s ease-out;
+  }
+  @keyframes flashAnim {
+    0% { opacity: 0; }
+    12% { opacity: .92; }
+    100% { opacity: 0; }
+  }
+  #photoHint {
+    position: absolute;
+    bottom: 18px; left: 0; right: 0;
+    text-align: center;
+    font-size: 12px;
+    color: rgba(255,255,255,.42);
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <div id="bg"></div>
+  <div id="bgShade"></div>
+
+  <div id="chapterTitle"></div>
+
+  <div id="choices"></div>
+
+  <div id="dialog" onclick="advance()">
+    <div id="nameTag"></div>
+    <div id="dialogText"></div>
+    <div id="hint">点击继续</div>
+  </div>
+
+  <div id="chapterCard" onclick="enterChapter()">
+    <div class="num" id="cardNum"></div>
+    <div class="name" id="cardName"></div>
+    <div class="line"></div>
+    <div class="tip">点击进入</div>
+  </div>
+
+  <div id="photoOverlay" onclick="closePhoto(event)">
+    <div id="photoFlash"></div>
+    <img id="photoImg" src="" alt="">
+    <div id="photoHint">点击继续</div>
+  </div>
+
+  <div id="cover">
+    <h1>沉浸式体验<br>水水军阀的一天</h1>
+    <div class="sub">MCN公司图文编辑生存实录</div>
+    <div class="guess">封面又网络错误了。<br>企鹅又去厕所了。<br>雨晴又说没事了。</div>
+    <button onclick="startGame()">开 始 上 班</button>
+  </div>
+
+  <div id="final">
+    <canvas id="meteorCanvas"></canvas>
+    <div class="inner">
+      <h2 id="endingTitle"></h2>
+      <div id="endingText"></div>
+      <div id="endingNote"></div>
+      <button id="restartBtn" onclick="location.reload()">再上一天班</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =====================================================
+   图片配置：只改这里，格式 https://i.postimg.cc/xxx/xxx.png
+===================================================== */
+const IMG = {
+  cover:  "",
+  ch1:    "",
+  ch2:    "",
+  ch3:    "",
+  ch4:    "",
+  ch5:    "",
+  ch6:    "",
+  ch7:    "",
+  ending: ""
+};
+/* ===================================================== */
+
+const CHAPTERS = [
+  {
+    title: "第一章 · 入职第一天 · 水水军阀",
+    img: IMG.ch1,
+    lines: [
+      { who: "narr", text: "我入职了水水军阀，岗位是MCN公司图文编辑。" },
+      { who: "narr", text: "工位在角落，电脑是上一任留下的，开机花了三分钟。" },
+      { who: "narr", text: "群里一共六个人。组长叫企鹅，还有一个叫雨晴。" },
+      { who: "colleague", text: "新人来了？" },
+      { who: "me", text: "大家好，我是新来的图文编辑。" },
+      { who: "colleague", text: "欢迎欢迎。" },
+      { who: "narr", text: "企鹅在群里发了一条消息。" },
+      { who: "penguin", text: "欢迎。" },
+      { who: "penguin", text: "先熟悉一下后台，今天试着发两篇。" },
+      { who: "me", text: "好的。" },
+      { who: "narr", text: "我点开后台上传封面，页面转了半天。" },
+      { who: "narr", text: "弹出一行红字：网络错误，请重试。" }
+    ],
+    choice: {
+      q: "我？",
+      options: [
+        { label: "刷新一下，再试一次", tone: "normal",
+          reply: [
+            { who: "narr", text: "我刷新，重传，还是网络错误。" },
+            { who: "narr", text: "又试了一次，还是网络错误。" },
+            { who: "me", text: "……行吧。" }
+          ]},
+        { label: "在群里问一句", tone: "ask",
+          reply: [
+            { who: "me", text: "封面总是网络错误，有人遇到过吗？" },
+            { who: "colleague", text: "有。" },
+            { who: "colleague", text: "老特娘了比的网络错误。" },
+            { who: "colleague", text: "烦死了。" }
+          ]},
+        { label: "先不管，写正文", tone: "avoid",
+          reply: [
+            { who: "narr", text: "我决定先写正文，封面的事一会儿再说。" },
+            { who: "narr", text: "写了两段，又忍不住点回封面页面。" },
+            { who: "narr", text: "还是网络错误。" }
+          ]}
+      ]
+    }
+  },
+  {
+    title: "第二章 · 第一天下午 · 歪封面",
+    img: IMG.ch2,
+    lines: [
+      { who: "narr", text: "下午两点，群里开始热闹。" },
+      { who: "colleague", text: "所以咋整啊。" },
+      { who: "colleague", text: "就不能放大了，只能原图。" },
+      { who: "colleague", text: "我只好原图了。" },
+      { who: "colleague", text: "刷新好几回也不好使。" },
+      { who: "colleague", text: "想改改位置也光网络错误。" },
+      { who: "colleague", text: "啥玩意啊。" },
+      { who: "colleague", text: "我每次都刷新好几回。" },
+      { who: "me", text: "不改了。" },
+      { who: "me", text: "吗的。" },
+      { who: "colleague", text: "强迫症，不改感觉位置不对。" },
+      { who: "colleague", text: "封面是歪的。" }
+    ],
+    choice: {
+      q: "我看着屏幕上的歪封面——",
+      options: [
+        { label: "算了，歪就歪吧", tone: "giveup",
+          reply: [
+            { who: "narr", text: "我放弃了。封面歪着就歪着吧。" },
+            { who: "narr", text: "反正也没人看。" },
+            { who: "narr", text: "我点了发布。" }
+          ]},
+        { label: "再试最后一次", tone: "retry",
+          reply: [
+            { who: "narr", text: "我刷新，重传，改位置。" },
+            { who: "narr", text: "网络错误。" },
+            { who: "narr", text: "我再刷新，再重传。" },
+            { who: "narr", text: "网络错误。" },
+            { who: "me", text: "……" }
+          ]},
+        { label: "去问企鹅", tone: "boss",
+          reply: [
+            { who: "me", text: "企鹅，封面一直网络错误，能解决吗？" },
+            { who: "narr", text: "企鹅过了三分钟才回。" },
+            { who: "penguin", text: "很多人都这样。" }
+          ]}
+      ]
+    }
+  },
+  {
+    title: "第三章 · 第二天 · 企鹅的回复",
+    img: IMG.ch3,
+    lines: [
+      { who: "narr", text: "第二天，封面还是网络错误。" },
+      { who: "narr", text: "我已经刷新了五六遍。" },
+      { who: "colleague", text: "我去找企鹅了，看能解决不。" },
+      { who: "colleague", text: "我刷新了五六遍都动不了封面。" },
+      { who: "colleague", text: "企鹅怎么说？" },
+      { who: "narr", text: "过了几分钟，同事在群里复述企鹅的话。" },
+      { who: "colleague", text: "企鹅说，很多人都这样。" },
+      { who: "colleague", text: "要不就说，怎么会呢。" },
+      { who: "narr", text: "我笑出了声。" },
+      { who: "narr", text: "然后企鹅直接在群里@了我。" },
+      { who: "penguin", text: "你先干吧。" },
+      { who: "penguin", text: "一会儿再说，我先看看。" },
+      { who: "narr", text: "我看着屏幕，手放在键盘上。" }
+    ],
+    choice: {
+      q: "我？",
+      options: [
+        { label: "劈死", tone: "kill", ending: "gg_fire" },
+        { label: "真想打死", tone: "beat", ending: "gg_beat" },
+        { label: "“知道了组长。”", tone: "endure",
+          reply: [
+            { who: "narr", text: "我打下“知道了组长”，然后按下回车。" },
+            { who: "narr", text: "群里安静了两秒。" },
+            { who: "narr", text: "然后我打开另一个对话框，把企鹅的话原样发了一遍。" },
+            { who: "me", text: "怎么会呢。" },
+            { who: "me", text: "很多人都这样。" },
+            { who: "me", text: "你先干吧，一会儿再说。" },
+            { who: "colleague", text: "哈哈哈哈哈。" },
+            { who: "colleague", text: "你学得好像。" },
+            { who: "narr", text: "我笑了一下，继续干活。" }
+          ]}
+      ]
+    }
+  },
+  {
+    title: "第四章 · 第三天 · 企鹅去哪儿了",
+    img: IMG.ch4,
+    lines: [
+      { who: "narr", text: "第三天下午，企鹅不见了。" },
+      { who: "colleague", text: "开始计时企鹅能在厕所蹲多久。" },
+      { who: "colleague", text: "她去厕所了？" },
+      { who: "colleague", text: "不去厕所的话不知道去哪了。" },
+      { who: "colleague", text: "怪不得那么愿意搬下来。" },
+      { who: "colleague", text: "真是上面也没见她出去这么频繁。" },
+      { who: "narr", text: "过了十几分钟。" },
+      { who: "colleague", text: "回了。" },
+      { who: "colleague", text: "才十几分钟。" },
+      { who: "colleague", text: "不像她啊。" },
+      { who: "colleague", text: "又二十分钟吧。" },
+      { who: "narr", text: "企鹅从座位上又叹气又揉脑袋。" },
+      { who: "colleague", text: "看她从座位上又叹气又揉脑袋的。" },
+      { who: "colleague", text: "真想踹她。" },
+      { who: "colleague", text: "装什么大以巴狼呢。" },
+      { who: "colleague", text: "洗苹果去了又。" },
+      { who: "colleague", text: "她天天活不干，累个毛线。" },
+      { who: "colleague", text: "补充维生素乐游。" },
+      { who: "colleague", text: "打俩字就吃上了。" },
+      { who: "colleague", text: "他妈的。" }
+    ],
+    choice: {
+      q: "我看着企鹅的座位——",
+      options: [
+        { label: "跟着群里一起吐槽", tone: "join",
+          reply: [
+            { who: "me", text: "她一天上几趟厕所啊。" },
+            { who: "colleague", text: "不知道，反正比我多。" },
+            { who: "colleague", text: "她要是天天干点活也不说她。" },
+            { who: "colleague", text: "她天天自在的不行，就该骂死她。" }
+          ]},
+        { label: "不说话，默默看着", tone: "watch",
+          reply: [
+            { who: "narr", text: "我看着企鹅的座位，没说话。" },
+            { who: "narr", text: "她回来了，手里拿着一个苹果。" },
+            { who: "narr", text: "她坐下，咬了一口，开始揉脑袋。" },
+            { who: "narr", text: "我不知道她在累什么。" }
+          ]},
+        { label: "问一句：她到底在忙什么", tone: "ask",
+          reply: [
+            { who: "me", text: "她到底在忙什么啊。" },
+            { who: "colleague", text: "不知道。" },
+            { who: "colleague", text: "反正不是工作。" },
+            { who: "colleague", text: "不干活的滚出去。" },
+            { who: "colleague", text: "让人看了心烦。" }
+          ]}
+      ]
+    }
+  },
+  {
+    title: "第五章 · 第四天 · 雨晴",
+    img: IMG.ch5,
+    lines: [
+      { who: "narr", text: "第四天，我终于见到了雨晴。" },
+      { who: "narr", text: "她坐在工位上，看起来很忙。" },
+      { who: "narr", text: "企鹅在群里@了她。" },
+      { who: "penguin", text: "雨晴，封面那个网络错误，你看一下。" },
+      { who: "rain", text: "好的。" },
+      { who: "narr", text: "过了十分钟。" },
+      { who: "penguin", text: "怎么样？" },
+      { who: "rain", text: "没事。" },
+      { who: "narr", text: "又过了十分钟。" },
+      { who: "penguin", text: "那让新人先按原图发？" },
+      { who: "rain", text: "可以。" },
+      { who: "narr", text: "雨晴说完，低头继续做自己的事。" },
+      { who: "narr", text: "我看着她，忽然明白了什么。" }
+    ],
+    choice: {
+      q: "我？",
+      options: [
+        { label: "问雨晴，到底怎么解决", tone: "askRain",
+          reply: [
+            { who: "me", text: "雨晴，那个封面网络错误，具体怎么处理啊？" },
+            { who: "rain", text: "没事。" },
+            { who: "me", text: "不是，我是说……" },
+            { who: "rain", text: "你就先原图发，没事。" },
+            { who: "narr", text: "她说完，转回去了。" }
+          ]},
+        { label: "不问了，自己想办法", tone: "self",
+          reply: [
+            { who: "narr", text: "我决定不问了。" },
+            { who: "narr", text: "我打开搜索引擎，搜“MCN 后台 封面 网络错误”。" },
+            { who: "narr", text: "搜出来一堆同样的问题，没有一个解决方案。" },
+            { who: "me", text: "行吧。" }
+          ]},
+        { label: "把雨晴的话记下来", tone: "record",
+          reply: [
+            { who: "narr", text: "我打开备忘录，打了一行字。" },
+            { who: "narr", text: "“雨晴：没事。”" },
+            { who: "narr", text: "我也不知道记这个有什么用。" },
+            { who: "narr", text: "但我就是想记。" }
+          ]}
+      ]
+    }
+  },
+  {
+    title: "第六章 · 一周后 · 戾气",
+    img: IMG.ch6,
+    lines: [
+      { who: "narr", text: "一周后，我已经习惯了。" },
+      { who: "narr", text: "封面网络错误，就点原图。" },
+      { who: "narr", text: "封面歪了，就歪着发。" },
+      { who: "narr", text: "群里每天都有人问，每天都有人说没事。" },
+      { who: "colleague", text: "今天封面又网络错误了。" },
+      { who: "colleague", text: "烦死了。" },
+      { who: "me", text: "原图吧。" },
+      { who: "colleague", text: "只能原图了。" },
+      { who: "narr", text: "这天下午，群里忽然安静了一会儿。" },
+      { who: "colleague", text: "真服了。" },
+      { who: "colleague", text: "谁还记得咱们原先还没那么大戾气。" },
+      { who: "colleague", text: "现在企鹅有一点风吹草动咱就开炮。" },
+      { who: "narr", text: "没有人接话。" },
+      { who: "narr", text: "但每个人都在心里点了点头。" }
+    ],
+    choice: {
+      q: "我？",
+      options: [
+        { label: "说一句：是啊，以前不这样", tone: "agree",
+          reply: [
+            { who: "me", text: "是啊。" },
+            { who: "me", text: "以前不这样。" },
+            { who: "colleague", text: "以前她还装一装。" },
+            { who: "colleague", text: "现在装都不装了。" }
+          ]},
+        { label: "不说话，继续发歪封面", tone: "numb",
+          reply: [
+            { who: "narr", text: "我没说话，点了发布。" },
+            { who: "narr", text: "封面歪着，阅读量个位数。" },
+            { who: "narr", text: "我关掉后台，打开下一篇。" }
+          ]},
+        { label: "私聊企鹅，最后一次", tone: "last",
+          reply: [
+            { who: "me", text: "企鹅，封面问题已经一周了，能不能给个明确说法。" },
+            { who: "narr", text: "企鹅这次回得很快。" },
+            { who: "penguin", text: "怎么会呢。" },
+            { who: "penguin", text: "很多人都这样。" },
+            { who: "penguin", text: "你先干吧，一会儿再说，我先看看。" }
+          ]}
+      ]
+    }
+  },
+  {
+    title: "第七章 · 最后 · 我决定",
+    img: IMG.ch7,
+    lines: [
+      { who: "narr", text: "又过了几天。" },
+      { who: "narr", text: "我已经能熟练地跳过网络错误，直接点原图。" },
+      { who: "narr", text: "我已经能面不改色地把歪封面发出去。" },
+      { who: "narr", text: "我甚至开始理解雨晴。" },
+      { who: "narr", text: "不是理解她为什么说没事。" },
+      { who: "narr", text: "是理解她为什么能一直说没事。" },
+      { who: "narr", text: "这天下午，群里又有人问封面。" },
+      { who: "colleague", text: "封面又网络错误了。" },
+      { who: "colleague", text: "咋整啊。" },
+      { who: "narr", text: "企鹅没说话。" },
+      { who: "narr", text: "雨晴也没说话。" },
+      { who: "narr", text: "所有人都在等。" },
+      { who: "narr", text: "我看着输入框，光标一闪一闪。" }
+    ],
+    choice: {
+      q: "我打下什么？",
+      options: [
+        { label: "“没事，原图发吧。”", tone: "become", ending: "become" },
+        { label: "“这个问题到底谁能解决？”", tone: "fight", ending: "fight" },
+        { label: "“怎么会呢。”", tone: "mocking", ending: "mocking" }
+      ]
+    }
+  }
+];
+
+const ENDINGS = {
+  gg_fire: {
+    title: "GG · 劈死",
+    text:
+      "我打下“劈死”，然后按下回车。\n\n" +
+      "当然，我没有真的劈死她。\n" +
+      "但我把这两个字发到了群里。\n\n" +
+      "群里沉默了。\n" +
+      "企鹅也沉默了。\n\n" +
+      "第二天，HR找我谈话。\n" +
+      "第三天，我收拾东西走了。\n\n" +
+      "水水军阀少了一个图文编辑。\n" +
+      "封面还是网络错误。"
+  },
+  gg_beat: {
+    title: "GG · 真想打死",
+    text:
+      "我打下“真想打死”，然后按下回车。\n\n" +
+      "群里有人发了一个笑哭的表情。\n" +
+      "然后企鹅出现了。\n\n" +
+      "“谁想打死谁？”\n\n" +
+      "没有人说话。\n\n" +
+      "第二天，我被调去了另一个组。\n" +
+      "那个组没有企鹅。\n" +
+      "但封面还是网络错误。"
+  },
+  become: {
+    title: "结局 · 我成了下一个雨晴",
+    text:
+      "我打下“没事，原图发吧”，然后按下回车。\n\n" +
+      "群里安静了两秒。\n" +
+      "有人说“好的”。\n" +
+      "有人说“谢谢”。\n\n" +
+      "我低下头，继续做自己的事。\n" +
+      "企鹅没有再问。\n" +
+      "封面还是歪的。\n" +
+      "但没有人再提了。\n\n" +
+      "我终于明白，雨晴不是不干活。\n" +
+      "她只是比我更早学会了怎么在这里活下去。\n\n" +
+      "晚上下班，我路过企鹅的工位。\n" +
+      "她正在洗苹果。\n" +
+      "我看了她一眼，没说话。\n" +
+      "她也没看我。"
+  },
+  fight: {
+    title: "结局 · 我问了那句话",
+    text:
+      "我打下“这个问题到底谁能解决”，然后按下回车。\n\n" +
+      "群里安静了很久。\n" +
+      "久到以为我被踢了。\n\n" +
+      "企鹅终于出现。\n" +
+      "“我问下雨晴。”\n" +
+      "雨晴过了十分钟回：“没事。”\n" +
+      "企鹅说：“你看，没事。”\n\n" +
+      "我看着屏幕，不知道该说什么。\n" +
+      "我没有输，也没有赢。\n" +
+      "我只是问了一个所有人都知道答案的问题。\n\n" +
+      "第二天，封面还是网络错误。\n" +
+      "我还是点了原图。\n" +
+      "企鹅还是去了厕所。\n" +
+      "雨晴还是说没事。\n" +
+      "群里还是有人骂。\n" +
+      "一切照旧。"
+  },
+  mocking: {
+    title: "结局 · 怎么会呢",
+    text:
+      "我打下“怎么会呢”，然后按下回车。\n\n" +
+      "群里沉默了一秒。\n" +
+      "然后有人发了一个笑哭的表情。\n" +
+      "接着是第二个，第三个。\n\n" +
+      "“哈哈哈哈。”\n" +
+      "“你学得好像。”\n" +
+      "“太像了。”\n\n" +
+      "企鹅没有出现。\n" +
+      "雨晴也没有。\n" +
+      "但我这句话，成了群里新的口头禅。\n\n" +
+      "以后每次封面网络错误，\n" +
+      "都会有人打一句“怎么会呢”。\n" +
+      "然后大家笑一下，点原图，继续发。\n\n" +
+      "我没有改变任何事。\n" +
+      "但我让这个群，变得稍微能待了一点。\n\n" +
+      "第二天，企鹅又去厕所了。\n" +
+      "群里又开始计时。\n" +
+      "我看着屏幕，笑了一下。"
+  }
+};
+
+let state = null;
+
+(function setCoverBg() {
+  const cover = document.getElementById("cover");
+  if (IMG.cover) {
+    cover.style.background =
+      `linear-gradient(160deg, rgba(20,24,32,.55), rgba(40,26,34,.72)), url('${IMG.cover}') center/cover`;
+  }
+})();
+
+function startGame() {
+  document.getElementById("cover").style.display = "none";
+  state = {
+    chapter: 0,
+    lines: [],
+    idx: 0,
+    phase: "intro",
+    current: null,
+    pendingNext: false
+  };
+  loadChapter(0);
+}
+
+function setBg(img) {
+  const bg = document.getElementById("bg");
+  if (img) {
+    bg.style.backgroundImage = `url('${img}')`;
+  } else {
+    bg.style.backgroundImage = "";
+    bg.style.background = "linear-gradient(160deg, #2b3340, #3a2f3a 60%, #46392f)";
+  }
+}
+
+function loadChapter(i) {
+  state.chapter = i;
+  state.current = CHAPTERS[i];
+  state.lines = state.current.lines;
+  state.idx = 0;
+  state.phase = "card";
+  state.pendingNext = false;
+
+  setBg(state.current.img);
+
+  const titleEl = document.getElementById("chapterTitle");
+  titleEl.classList.remove("show");
+  titleEl.textContent = state.current.title;
+
+  document.getElementById("dialog").style.display = "none";
+  document.getElementById("choices").classList.remove("show");
+  document.getElementById("choices").innerHTML = "";
+
+  const card = document.getElementById("chapterCard");
+  const parts = state.current.title.split(" · ");
+  document.getElementById("cardNum").textContent = parts[0] || "";
+  document.getElementById("cardName").textContent = parts.slice(1).join(" · ");
+  card.classList.add("show");
+  card.style.animation = "none";
+  void card.offsetWidth;
+  card.style.animation = "fade .5s ease";
+}
+
+function enterChapter() {
+  const card = document.getElementById("chapterCard");
+  card.classList.remove("show");
+
+  document.getElementById("dialog").style.display = "block";
+
+  const titleEl = document.getElementById("chapterTitle");
+  titleEl.textContent = state.current.title;
+  titleEl.classList.add("show");
+
+  state.phase = "intro";
+  render();
+}
+
+function render() {
+  const line = state.lines[state.idx];
+
+  if (line.who === "photo") {
+    showPhoto(line.text);
+    return;
+  }
+
+  const nameTag = document.getElementById("nameTag");
+  const text = document.getElementById("dialogText");
+
+  if (line.who === "penguin") {
+    nameTag.className = "penguin";
+    nameTag.textContent = "企鹅";
+    text.className = "";
+  } else if (line.who === "rain") {
+    nameTag.className = "rain";
+    nameTag.textContent = "雨晴";
+    text.className = "";
+  } else if (line.who === "me") {
+    nameTag.className = "me";
+    nameTag.textContent = "我";
+    text.className = "";
+  } else if (line.who === "colleague") {
+    nameTag.className = "colleague";
+    nameTag.textContent = "同事";
+    text.className = "";
+  } else {
+    nameTag.className = "";
+    nameTag.textContent = "";
+    text.className = "narration";
+  }
+  text.textContent = line.text;
+
+  const dialog = document.getElementById("dialog");
+  dialog.classList.remove("fade");
+  void dialog.offsetWidth;
+  dialog.classList.add("fade");
+
+  document.getElementById("choices").classList.remove("show");
+  document.getElementById("choices").innerHTML = "";
+
+  document.getElementById("hint").textContent =
+    state.phase === "choice" ? "" : "点击继续";
+}
+
+function advance() {
+  if (state.phase === "choice") return;
+  if (state.phase === "card") return;
+  if (document.getElementById("photoOverlay").classList.contains("show")) return;
+
+  if (state.phase === "prompt") {
+    showChoices();
+    return;
+  }
+
+  if (state.idx < state.lines.length - 1) {
+    state.idx++;
+    render();
+    return;
+  }
+
+  if (state.phase === "intro") {
+    showChoicePrompt();
+    return;
+  }
+
+  if (state.phase === "reply") {
+    if (state.pendingNext) {
+      state.lines = state.current.next;
+      state.idx = 0;
+      state.phase = "next";
+      state.pendingNext = false;
+      render();
+      return;
+    }
+    nextChapter();
+    return;
+  }
+
+  if (state.phase === "next") {
+    nextChapter();
+    return;
+  }
+}
+
+function nextChapter() {
+  if (state.chapter < CHAPTERS.length - 1) {
+    loadChapter(state.chapter + 1);
+  }
+}
+
+function showChoicePrompt() {
+  state.phase = "prompt";
+
+  const nameTag = document.getElementById("nameTag");
+  const text = document.getElementById("dialogText");
+  nameTag.className = "";
+  nameTag.textContent = "";
+  text.className = "prompt";
+  text.textContent = state.current.choice.q;
+
+  document.getElementById("hint").textContent = "点击继续";
+}
+
+function showChoices() {
+  state.phase = "choice";
+  const choice = state.current.choice;
+  const box = document.getElementById("choices");
+  box.innerHTML = "";
+
+  choice.options.forEach((opt, i) => {
+    const btn = document.createElement("button");
+    btn.textContent = opt.label;
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      choose(i);
+    };
+    box.appendChild(btn);
+  });
+
+  box.classList.add("show");
+
+  const nameTag = document.getElementById("nameTag");
+  const text = document.getElementById("dialogText");
+  nameTag.className = "";
+  nameTag.textContent = "";
+  text.className = "prompt";
+  text.textContent = choice.q;
+
+  document.getElementById("hint").textContent = "";
+}
+
+function choose(i) {
+  const opt = state.current.choice.options[i];
+
+  if (opt.ending) {
+    showEnding(opt.ending);
+    return;
+  }
+
+  state.lines = opt.reply;
+  state.idx = 0;
+  state.phase = "reply";
+  state.pendingNext = !!state.current.next;
+
+  document.getElementById("choices").classList.remove("show");
+  document.getElementById("choices").innerHTML = "";
+  render();
+}
+
+function showPhoto(src) {
+  const overlay = document.getElementById("photoOverlay");
+  const img = document.getElementById("photoImg");
+
+  img.src = src;
+  overlay.classList.add("show");
+  overlay.classList.remove("flash");
+  void overlay.offsetWidth;
+  overlay.classList.add("flash");
+
+  document.getElementById("hint").textContent = "";
+}
+
+function closePhoto(e) {
+  if (e) e.stopPropagation();
+  const overlay = document.getElementById("photoOverlay");
+  overlay.classList.remove("show");
+  overlay.classList.remove("flash");
+
+  if (state.idx < state.lines.length - 1) {
+    state.idx++;
+    render();
+  } else if (state.phase === "next") {
+    nextChapter();
+  }
+}
+
+function showEnding(key) {
+  const ending = ENDINGS[key];
+
+  document.getElementById("dialog").style.display = "none";
+  document.getElementById("choices").style.display = "none";
+  document.getElementById("chapterTitle").classList.remove("show");
+  document.getElementById("chapterCard").classList.remove("show");
+
+  const final = document.getElementById("final");
+  final.style.display = "block";
+  final.scrollTop = 0;
+
+  document.getElementById("endingTitle").textContent = ending.title;
+  document.getElementById("endingText").textContent = ending.text;
+  document.getElementById("endingNote").textContent =
+    "水水军阀，今天也没有解决封面问题。";
+
+  document.getElementById("meteorCanvas").style.display = "none";
+}
+</script>
+</body>
+</html>
